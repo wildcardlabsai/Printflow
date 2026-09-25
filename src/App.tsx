@@ -36,13 +36,17 @@ import { LogUsageModal } from './components/filament/LogUsageModal';
 import { PrinterFormModal } from './components/printers/PrinterFormModal';
 import { JobActionModal } from './components/production/JobActionModal';
 import { ShippingLabelModal } from './components/shipping/ShippingLabelModal';
-import { AuthModal } from './components/auth/AuthModal';
+import { StudioAccessGate } from './components/auth/StudioAccessGate';
 
 import { Order, Product, Customer, FilamentSpool, Printer, ProductionJob } from './types';
 
 function MainApp() {
   const { isAuthenticated } = useAuth();
   const { updatePrinterStatus } = useDatabase();
+
+  if (!isAuthenticated) {
+    return <StudioAccessGate />;
+  }
 
   const [currentSection, setCurrentSection] = useState<NavSection>('dashboard');
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
