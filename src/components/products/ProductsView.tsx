@@ -228,8 +228,23 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ onOpenProductModal }
       </div>
 
       {filteredProducts.length === 0 && (
-        <div className="p-12 text-center text-slate-400 text-xs bg-slate-900 border border-slate-800 rounded-lg">
-          No products match the selected criteria.
+        <div className="py-16 flex flex-col items-center text-center bg-slate-900 border border-slate-800 rounded-lg">
+          <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+            <Box className="w-6 h-6 text-slate-500" />
+          </div>
+          <p className="text-sm text-slate-300 font-medium mb-1">
+            {products.length === 0 ? 'No products yet' : 'No products match your filters'}
+          </p>
+          <p className="text-xs text-slate-500 mb-4 max-w-[280px]">
+            {products.length === 0
+              ? 'Add your first product with pricing, print time, and filament specs to start building your catalog.'
+              : 'Try adjusting your search or material filter.'}
+          </p>
+          {products.length === 0 && (
+            <Button variant="primary" size="sm" onClick={() => onOpenProductModal()} leftIcon={<Plus className="w-3.5 h-3.5" />}>
+              Add First Product
+            </Button>
+          )}
         </div>
       )}
 

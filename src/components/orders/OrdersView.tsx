@@ -17,6 +17,7 @@ import {
   Calendar,
   Link2,
   FileText,
+  ShoppingCart,
 } from 'lucide-react';
 
 interface OrdersViewProps {
@@ -193,8 +194,25 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
             <tbody className="divide-y divide-slate-800/80 bg-slate-900/50">
               {sortedOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400 text-xs">
-                    No orders match your filter criteria.
+                  <td colSpan={8} className="py-16 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                        <ShoppingCart className="w-6 h-6 text-slate-500" />
+                      </div>
+                      <p className="text-sm text-slate-300 font-medium mb-1">
+                        {orders.length === 0 ? 'No orders yet' : 'No orders match your filters'}
+                      </p>
+                      <p className="text-xs text-slate-500 mb-4 max-w-[260px]">
+                        {orders.length === 0
+                          ? 'Create your first order to start tracking sales, production, and shipping.'
+                          : 'Try adjusting your search or filter criteria.'}
+                      </p>
+                      {orders.length === 0 && (
+                        <Button variant="primary" size="sm" onClick={onOpenNewOrder} leftIcon={<Plus className="w-3.5 h-3.5" />}>
+                          Create First Order
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (
