@@ -299,7 +299,7 @@ export const PrintersView: React.FC<PrintersViewProps> = ({
                       <Thermometer className="w-3 h-3 text-rose-400" /> Extruder
                     </span>
                     <span className="font-mono text-slate-200 font-semibold">
-                      {telemetry ? `${telemetry.nozzleTemperature}°C` : '45°C'}
+                      {telemetry ? `${telemetry.nozzleTemperature}°C` : '--'}
                       <span className="text-slate-500 font-normal text-[11px]">
                         {' '}/ {telemetry ? `${telemetry.targetNozzleTemperature}°C` : '0°C'}
                       </span>
@@ -311,7 +311,7 @@ export const PrintersView: React.FC<PrintersViewProps> = ({
                       <Thermometer className="w-3 h-3 text-amber-400" /> Heated Bed
                     </span>
                     <span className="font-mono text-slate-200 font-semibold">
-                      {telemetry ? `${telemetry.bedTemperature}°C` : '55°C'}
+                      {telemetry ? `${telemetry.bedTemperature}°C` : '--'}
                       <span className="text-slate-500 font-normal text-[11px]">
                         {' '}/ {telemetry ? `${telemetry.targetBedTemperature}°C` : '0°C'}
                       </span>
@@ -345,29 +345,17 @@ export const PrintersView: React.FC<PrintersViewProps> = ({
                     </div>
 
                     <div className="grid grid-cols-4 gap-2">
-                      {[
-                        { ch: 1, mat: 'PLA', col: 'Black', hex: '#0f172a', inUse: true },
-                        { ch: 2, mat: 'PLA', col: 'White', hex: '#f8fafc', inUse: false },
-                        { ch: 3, mat: 'PETG', col: 'Orange', hex: '#f97316', inUse: false },
-                        { ch: 4, mat: 'Silk', col: 'Red', hex: '#dc2626', inUse: false },
-                      ].map((slot) => (
+                      {[1, 2, 3, 4].map((ch) => (
                         <div
-                          key={slot.ch}
-                          className={`p-2 rounded border text-center text-[10px] ${
-                            slot.inUse
-                              ? 'border-sky-500 bg-sky-950/40 text-white font-semibold'
-                              : 'border-slate-800/80 bg-slate-900/60 text-slate-400'
-                          }`}
+                          key={ch}
+                          className="p-2 rounded border text-center text-[10px] border-slate-800/80 bg-slate-900/60 text-slate-400"
                         >
                           <div className="flex items-center justify-center gap-1 mb-1">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full border border-slate-600 inline-block"
-                              style={{ backgroundColor: slot.hex }}
-                            />
-                            <span>Ch {slot.ch}</span>
+                            <span className="w-2.5 h-2.5 rounded-full border border-slate-600 inline-block bg-slate-700" />
+                            <span>Ch {ch}</span>
                           </div>
-                          <div className="truncate font-mono">{slot.mat}</div>
-                          <div className="text-[9px] text-slate-400 truncate">{slot.col}</div>
+                          <div className="truncate font-mono">--</div>
+                          <div className="text-[9px] text-slate-400 truncate">Empty</div>
                         </div>
                       ))}
                     </div>
@@ -429,7 +417,7 @@ export const PrintersView: React.FC<PrintersViewProps> = ({
                         <span>
                           {telemetry?.layerNumber
                             ? `Layer ${telemetry.layerNumber} / ${telemetry.totalLayers}`
-                            : 'Layer 84 / 320'}
+                            : '--'}
                         </span>
                       </div>
                       <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
@@ -439,10 +427,10 @@ export const PrintersView: React.FC<PrintersViewProps> = ({
                         />
                       </div>
                       <div className="flex justify-between text-[10px] text-slate-500 font-mono pt-0.5">
-                        <span>Duration: {Math.floor((telemetry?.printDurationSeconds || 1200) / 60)} min</span>
+                        <span>Duration: {telemetry?.printDurationSeconds ? `${Math.floor(telemetry.printDurationSeconds / 60)} min` : '--'}</span>
                         <span>
                           Est. Remaining:{' '}
-                          {Math.floor((telemetry?.estimatedTimeRemainingSeconds || 3600) / 60)} min
+                          {telemetry?.estimatedTimeRemainingSeconds ? `${Math.floor(telemetry.estimatedTimeRemainingSeconds / 60)} min` : '--'}
                         </span>
                       </div>
                     </div>

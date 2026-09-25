@@ -95,9 +95,6 @@ function MainApp() {
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans antialiased">
-      {/* Unauthenticated gate overlay */}
-      {!isAuthenticated && <AuthModal isOpen={true} />}
-
       {/* Desktop Sidebar Navigation */}
       <Sidebar
         currentSection={currentSection}

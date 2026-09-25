@@ -130,18 +130,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           {printer.currentJobName}
                         </span>
                         <span className="font-mono text-indigo-300 font-bold">
-                          {printer.progressPercentage || 67}%
+                          {printer.progressPercentage || 0}%
                         </span>
                       </div>
                       {/* Progress bar */}
                       <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
                         <div
                           className="bg-indigo-500 h-full rounded-full transition-all duration-500"
-                          style={{ width: `${printer.progressPercentage || 67}%` }}
+                          style={{ width: `${printer.progressPercentage || 0}%` }}
                         />
                       </div>
                       <div className="text-[10px] text-indigo-300/80 flex items-center justify-between">
-                        <span>Remaining: ~{printer.remainingMinutes || 42} mins</span>
+                        <span>{printer.remainingMinutes ? `Remaining: ~${printer.remainingMinutes} mins` : 'Estimating...'}</span>
                         <span>{printer.capabilities?.multiColor ? 'AD5X IFS Multi-Color' : 'Single Extruder'}</span>
                       </div>
                     </div>
