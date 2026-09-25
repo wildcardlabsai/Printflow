@@ -50,7 +50,12 @@ function saveToStorage<T>(key: string, data: T): void {
     localStorage.setItem(DB_PREFIX + key, JSON.stringify(data));
     window.dispatchEvent(new CustomEvent('printflow_db_changed', { detail: { key } }));
 
-    // Auto-sync debounced push to cloud database (Firebase or Supabase) if configured
+    // 1. Instant live push to PokeCraft Central Cloud Server (zero config, active on all devices)
+    import('./liveSync').then(({ liveSync }) => {
+      liveSync.queueCollectionPush(key);
+    }).catch(() => {});
+
+    // 2. Optional external push to user's Firebase or Supabase if configured
     if (cloudSyncDebounce) clearTimeout(cloudSyncDebounce);
     cloudSyncDebounce = setTimeout(() => {
       // Check Firebase

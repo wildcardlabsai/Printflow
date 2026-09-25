@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { liveSync, LiveSyncState } from '../../lib/liveSync';
 import { firebaseDb, FirebaseConfig, FirebaseSyncState, FIRESTORE_RULES_SNIPPET } from '../../lib/firebaseDb';
 import { cloudDb, CloudDbConfig, CloudSyncState, SQL_SETUP_SCRIPT } from '../../lib/cloudDb';
 import { useNotification } from '../../context/NotificationContext';
@@ -18,12 +19,19 @@ import {
   Zap,
   Key,
   ShieldCheck,
+  Check,
+  Globe,
   Radio,
 } from 'lucide-react';
 
 export const CloudDatabaseSettingsView: React.FC = () => {
   const { showToast } = useNotification();
 
+  // Central Live Sync State (Zero-config, built-in real-time synchronization)
+  const [liveState, setLiveState] = useState<LiveSyncState>(() => liveSync.getState());
+  const [isSyncingLive, setIsSyncingLive] = useState(false);
+
+  // Optional External Database Engine (Firebase / Supabase)
   const [activeEngine, setActiveEngine] = useState<'firebase' | 'supabase'>('firebase');
 
   // Firebase State
@@ -52,6 +60,9 @@ export const CloudDatabaseSettingsView: React.FC = () => {
   const [copiedSql, setCopiedSql] = useState(false);
 
   useEffect(() => {
+    const handleLiveStatus = (e: any) => {
+      if (e.detail) setLiveState(e.detail);
+    };
     const handleFbStatus = (e: any) => {
       if (e.detail) setFbState(e.detail);
     };
@@ -59,13 +70,34 @@ export const CloudDatabaseSettingsView: React.FC = () => {
       if (e.detail) setSbState(e.detail);
     };
 
+    window.addEventListener('pokecraft_live_sync_status', handleLiveStatus);
     window.addEventListener('pokecraft_firebase_sync_status', handleFbStatus);
     window.addEventListener('printflow_cloud_sync_status', handleSbStatus);
+
     return () => {
+      window.removeEventListener('pokecraft_live_sync_status', handleLiveStatus);
       window.removeEventListener('pokecraft_firebase_sync_status', handleFbStatus);
       window.removeEventListener('printflow_cloud_sync_status', handleSbStatus);
     };
   }, []);
+
+  // Central Live Sync Handler
+  const handleForceLiveSync = async () => {
+    setIsSyncingLive(true);
+    try {
+      await liveSync.hydrateFromServer();
+      await liveSync.pushAllCollectionsToServer();
+      showToast({
+        type: 'success',
+        title: 'Multi-Device Sync Complete',
+        message: 'All orders, inventory, and production jobs are live across all devices.',
+      });
+    } catch (err: any) {
+      showToast({ type: 'error', title: 'Sync Notice', message: err.message });
+    } finally {
+      setIsSyncingLive(false);
+    }
+  };
 
   // Firebase Handlers
   const handleTestFirebase = async () => {
@@ -75,13 +107,13 @@ export const CloudDatabaseSettingsView: React.FC = () => {
       if (res.success) {
         showToast({
           type: 'success',
-          title: 'Firebase Firestore Connected!',
-          message: 'PokeCraft 3D Prints multi-device sync is working.',
+          title: 'Firebase Connected',
+          message: res.message,
         });
       } else {
         showToast({
           type: 'error',
-          title: 'Firebase Test Notice',
+          title: 'Firebase Connection Notice',
           message: res.message,
         });
       }
@@ -99,8 +131,8 @@ export const CloudDatabaseSettingsView: React.FC = () => {
       firebaseDb.saveConfig(fbConfig);
       showToast({
         type: 'success',
-        title: 'Firebase Settings Saved',
-        message: 'Credentials stored. Realtime multi-device listeners initialized.',
+        title: 'Firebase Credentials Saved',
+        message: 'External Firestore sync enabled.',
       });
     } catch (err: any) {
       showToast({ type: 'error', title: 'Save Failed', message: err.message });
@@ -110,28 +142,19 @@ export const CloudDatabaseSettingsView: React.FC = () => {
   };
 
   const handleSyncFirebaseNow = async () => {
-    if (!firebaseDb.isConfigured()) {
-      showToast({
-        type: 'warning',
-        title: 'Firebase Not Configured',
-        message: 'Please enter your Firebase Project ID and Web API Key first.',
-      });
-      return;
-    }
-
     setIsSyncingFb(true);
     try {
       const pushRes = await firebaseDb.pushAllToFirebase();
       if (pushRes.success) {
         showToast({
           type: 'success',
-          title: 'Firebase Sync Complete',
-          message: 'All orders, spools, and jobs pushed to Firestore.',
+          title: 'Firebase Mirror Complete',
+          message: 'All collections successfully backed up to your Firebase Firestore project.',
         });
       } else {
         showToast({
           type: 'warning',
-          title: 'Sync Notice',
+          title: 'Firebase Notice',
           message: pushRes.message,
         });
       }
@@ -178,7 +201,7 @@ export const CloudDatabaseSettingsView: React.FC = () => {
       showToast({
         type: 'success',
         title: 'Supabase Settings Saved',
-        message: 'PostgreSQL PostgREST sync preferences updated.',
+        message: 'PostgreSQL sync preferences updated.',
       });
     } catch (err: any) {
       showToast({ type: 'error', title: 'Save Failed', message: err.message });
@@ -213,79 +236,87 @@ export const CloudDatabaseSettingsView: React.FC = () => {
     setTimeout(() => setCopiedSql(false), 3000);
   };
 
-  const isCurrentConnected =
-    activeEngine === 'firebase'
-      ? fbState.status === 'connected' || fbState.status === 'syncing'
-      : sbState.status === 'connected' || sbState.status === 'syncing';
-
   return (
     <div className="space-y-6">
-      {/* Multi-Device Status Card */}
+      {/* SECTION 1: PRIMARY LIVE MULTI-DEVICE CLOUD SYNC */}
       <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Flame className="w-5 h-5 text-amber-500" />
-              <h3 className="font-semibold text-white text-base">PokeCraft 3D Multi-Device Cloud Sync</h3>
+              <Globe className="w-5 h-5 text-emerald-400" />
+              <h3 className="font-semibold text-white text-base">PokeCraft 3D Live Multi-Device Cloud Sync</h3>
             </div>
             <p className="text-xs text-slate-400">
-              Live bi-directional synchronization across your workshop computers, laptops, and mobile devices.
+              Active on all devices. Orders, filament stock, and print jobs synchronize in real-time between your workshop PC, laptop, and phone.
             </p>
           </div>
 
-          {/* Status Badge */}
+          {/* Status Badge & Sync Now Button */}
           <div className="flex items-center gap-2">
             <div
               className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 border ${
-                isCurrentConnected
+                liveState.status === 'connected'
                   ? 'bg-emerald-950/60 border-emerald-800 text-emerald-400'
+                  : liveState.status === 'syncing'
+                  ? 'bg-sky-950/60 border-sky-800 text-sky-400 animate-pulse'
                   : 'bg-slate-800 border-slate-700 text-slate-400'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${isCurrentConnected ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  liveState.status === 'connected'
+                    ? 'bg-emerald-400 animate-pulse'
+                    : liveState.status === 'syncing'
+                    ? 'bg-sky-400'
+                    : 'bg-amber-400'
+                }`}
+              />
               <span>
-                {isCurrentConnected
-                  ? `${activeEngine === 'firebase' ? 'Firebase' : 'Supabase'} Synced Live`
-                  : 'Local Storage Mode'}
+                {liveState.status === 'connected'
+                  ? 'Live Synced Across Devices'
+                  : liveState.status === 'syncing'
+                  ? 'Syncing Updates...'
+                  : 'Connecting...'}
               </span>
             </div>
 
             <Button
-              variant="outline"
+              variant="primary"
               size="sm"
-              isLoading={activeEngine === 'firebase' ? isSyncingFb : isSyncingSb}
-              onClick={activeEngine === 'firebase' ? handleSyncFirebaseNow : handleSyncSupabaseNow}
+              isLoading={isSyncingLive}
+              onClick={handleForceLiveSync}
               leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
             >
-              Sync Now
+              Sync All Devices Now
             </Button>
           </div>
         </div>
 
-        {/* Visual Topology */}
+        {/* Live Network Topology */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
           <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-3 text-xs">
             <div className="w-9 h-9 rounded bg-sky-950 border border-sky-800 flex items-center justify-center text-sky-400 shrink-0">
               <Laptop className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-semibold text-white">Workshop PC</div>
-              <div className="text-[11px] text-slate-400">Flashforge queue & packing</div>
+              <div className="font-semibold text-white">Workshop Computer</div>
+              <div className="text-[11px] text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Flashforge AD5X bay & packing
+              </div>
             </div>
           </div>
 
           <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-center gap-3 text-xs">
-            <div className="w-9 h-9 rounded bg-amber-950/60 border border-amber-800 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-9 h-9 rounded bg-emerald-950 border border-emerald-800 flex items-center justify-center text-emerald-400 shrink-0">
               <Server className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-semibold text-white">
-                {activeEngine === 'firebase' ? 'Firebase Firestore' : 'Supabase Cloud DB'}
-              </div>
+              <div className="font-semibold text-white">PokeCraft Central Cloud</div>
               <div className="text-[11px] text-slate-400">
-                {fbState.lastSyncedAt
-                  ? `Synced ${new Date(fbState.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
-                  : 'Realtime Cloud Database'}
+                {liveState.lastSyncTime
+                  ? `Synced at ${new Date(liveState.lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+                  : 'Real-time SSE event stream'}
               </div>
             </div>
           </div>
@@ -296,93 +327,82 @@ export const CloudDatabaseSettingsView: React.FC = () => {
             </div>
             <div>
               <div className="font-semibold text-white">Mobile / Laptop</div>
-              <div className="text-[11px] text-slate-400">Remote status checks</div>
+              <div className="text-[11px] text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Live on-the-go order check
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Feature Checkpoints */}
+        <div className="pt-2 border-t border-slate-800/80 flex flex-wrap gap-4 text-xs text-slate-400">
+          <div className="flex items-center gap-1.5 text-slate-300">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Bi-directional real-time sync</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-slate-300">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Auto-push on order/spool edit</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-slate-300">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Offline-first local cache</span>
           </div>
         </div>
       </div>
 
-      {/* Cloud Engine Switcher */}
-      <div className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-950 border border-slate-800 w-fit">
-        <button
-          type="button"
-          onClick={() => setActiveEngine('firebase')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-            activeEngine === 'firebase'
-              ? 'bg-amber-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Flame className="w-4 h-4" />
-          Google Firebase Firestore (Recommended)
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveEngine('supabase')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-            activeEngine === 'supabase'
-              ? 'bg-sky-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Database className="w-4 h-4" />
-          Supabase (PostgreSQL)
-        </button>
-      </div>
-
-      {/* FIREBASE ENGINE TAB */}
-      {activeEngine === 'firebase' && (
-        <div className="space-y-6">
-          {/* 3 Step Firebase Guide */}
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-amber-500" />
-                <h3 className="font-semibold text-sm text-white">How to Connect Your Firebase Project</h3>
-              </div>
-              <a
-                href="https://console.firebase.google.com"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 font-medium"
-              >
-                Open Firebase Console <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+      {/* SECTION 2: OPTIONAL EXTERNAL DATABASE BACKUP & REPLICATION */}
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <Database className="w-4 h-4 text-amber-400" />
+              <h3 className="font-semibold text-sm text-white">Optional External Cloud Backup</h3>
             </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Optionally replicate all PokeCraft data to your own external Google Firebase or Supabase project.
+            </p>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="p-3.5 rounded bg-slate-950 border border-slate-800 space-y-1.5">
-                <span className="font-bold text-amber-400 text-sm">Step 1</span>
-                <div className="font-semibold text-white">Create Firebase Web App</div>
-                <p className="text-slate-400 leading-relaxed">
-                  Go to <strong className="text-slate-200">console.firebase.google.com</strong>, select your project (e.g. PokeCraft 3D Prints), click the <strong>&lt;/&gt; Web</strong> icon, and copy the config values.
-                </p>
-              </div>
+          {/* Engine Selector */}
+          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setActiveEngine('firebase')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                activeEngine === 'firebase'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5" />
+              Google Firebase
+            </button>
 
-              <div className="p-3.5 rounded bg-slate-950 border border-slate-800 space-y-1.5">
-                <span className="font-bold text-amber-400 text-sm">Step 2</span>
-                <div className="font-semibold text-white">Enable Cloud Firestore</div>
-                <p className="text-slate-400 leading-relaxed">
-                  In Firebase left sidebar, click <strong className="text-slate-200">Build $\rightarrow$ Firestore Database</strong>, click <strong>Create Database</strong>, and set location to <em>europe-west2</em> or default.
-                </p>
-              </div>
+            <button
+              type="button"
+              onClick={() => setActiveEngine('supabase')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                activeEngine === 'supabase'
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5" />
+              Supabase Postgres
+            </button>
+          </div>
+        </div>
 
-              <div className="p-3.5 rounded bg-slate-950 border border-slate-800 space-y-1.5">
-                <span className="font-bold text-amber-400 text-sm">Step 3</span>
-                <div className="font-semibold text-white">Paste Security Rules</div>
-                <p className="text-slate-400 leading-relaxed">
-                  In Firestore, open the <strong className="text-slate-200">Rules</strong> tab, paste the rules snippet below, and click <strong className="text-slate-200">Publish</strong>.
-                </p>
-              </div>
-            </div>
-
-            {/* Copy Firestore Rules */}
-            <div className="p-3 rounded bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 truncate">
-                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="text-xs text-slate-300 font-medium truncate">
-                  Firestore Rules: Enables sync for <code className="font-mono text-amber-400">pokecraft_store</code> collection
+        {/* FIREBASE SUB-VIEW */}
+        {activeEngine === 'firebase' && (
+          <div className="space-y-4">
+            <div className="p-3.5 rounded bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
+              <div className="text-xs">
+                <span className="font-semibold text-white block">External Firebase Firestore Mirror</span>
+                <span className="text-slate-400">
+                  Connect your Firebase web app credentials to mirror collections into your personal Google Cloud Firestore database.
                 </span>
               </div>
               <Button
@@ -392,156 +412,87 @@ export const CloudDatabaseSettingsView: React.FC = () => {
                 onClick={handleCopyRules}
                 leftIcon={copiedRules ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               >
-                {copiedRules ? 'Copied to Clipboard!' : 'Copy Firestore Rules'}
+                {copiedRules ? 'Rules Copied!' : 'Copy Firestore Rules'}
               </Button>
             </div>
+
+            <form onSubmit={handleSaveFirebase} className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Firebase Project ID
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. pokecraft-3d-prints"
+                    value={fbConfig.projectId}
+                    onChange={(e) => setFbConfig({ ...fbConfig, projectId: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Firebase Web API Key
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="AIzaSyBxxxx..."
+                    value={fbConfig.apiKey}
+                    onChange={(e) => setFbConfig({ ...fbConfig, apiKey: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={fbConfig.enabled}
+                    onChange={(e) => setFbConfig({ ...fbConfig, enabled: e.target.checked })}
+                    className="rounded border-slate-700 bg-slate-950 text-amber-600 focus:ring-0 w-3.5 h-3.5"
+                  />
+                  <span>Enable External Firebase Mirror</span>
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    isLoading={isTestingFb}
+                    onClick={handleTestFirebase}
+                    leftIcon={<Zap className="w-3.5 h-3.5" />}
+                  >
+                    Test Firebase
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    isLoading={isSavingFb}
+                    leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                  >
+                    Save Credentials
+                  </Button>
+                </div>
+              </div>
+            </form>
           </div>
+        )}
 
-          {/* Firebase Credentials Form */}
-          <form onSubmit={handleSaveFirebase} className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Key className="w-4 h-4 text-amber-400" />
-                <h3 className="font-semibold text-sm text-white">Firebase Web App Credentials</h3>
+        {/* SUPABASE SUB-VIEW */}
+        {activeEngine === 'supabase' && (
+          <div className="space-y-4">
+            <div className="p-3.5 rounded bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
+              <div className="text-xs">
+                <span className="font-semibold text-white block">External Supabase PostgreSQL Mirror</span>
+                <span className="text-slate-400">
+                  Mirror all collections into a PostgreSQL table with automated PostgREST endpoints.
+                </span>
               </div>
-              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <span>Enable Firebase Live Sync:</span>
-                <input
-                  type="checkbox"
-                  checked={fbConfig.enabled}
-                  onChange={(e) => setFbConfig({ ...fbConfig, enabled: e.target.checked })}
-                  className="rounded border-slate-700 bg-slate-950 text-amber-600 focus:ring-0 w-4 h-4"
-                />
-              </label>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Firebase Project ID <span className="text-amber-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. pokecraft-3d-prints"
-                  value={fbConfig.projectId}
-                  onChange={(e) => setFbConfig({ ...fbConfig, projectId: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white font-mono"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Firebase Web API Key <span className="text-amber-400">*</span>
-                </label>
-                <input
-                  type="password"
-                  placeholder="AIzaSyBxxxx..."
-                  value={fbConfig.apiKey}
-                  onChange={(e) => setFbConfig({ ...fbConfig, apiKey: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white font-mono"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Auth Domain (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="pokecraft-3d-prints.firebaseapp.com"
-                  value={fbConfig.authDomain}
-                  onChange={(e) => setFbConfig({ ...fbConfig, authDomain: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Storage Bucket (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="pokecraft-3d-prints.appspot.com"
-                  value={fbConfig.storageBucket}
-                  onChange={(e) => setFbConfig({ ...fbConfig, storageBucket: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  App ID (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="1:123456789:web:abcdef"
-                  value={fbConfig.appId}
-                  onChange={(e) => setFbConfig({ ...fbConfig, appId: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-              <span className="text-[11px] text-slate-500">
-                You can also configure these in Vercel as <code className="text-slate-400">VITE_FIREBASE_PROJECT_ID</code> and <code className="text-slate-400">VITE_FIREBASE_API_KEY</code>.
-              </span>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  isLoading={isTestingFb}
-                  onClick={handleTestFirebase}
-                  leftIcon={<Zap className="w-3.5 h-3.5" />}
-                >
-                  Test Firestore
-                </Button>
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  isLoading={isSavingFb}
-                  leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
-                >
-                  Save Firebase Credentials
-                </Button>
-              </div>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* SUPABASE ENGINE TAB */}
-      {activeEngine === 'supabase' && (
-        <div className="space-y-6">
-          {/* Supabase Guide */}
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Database className="w-4 h-4 text-sky-400" />
-                <h3 className="font-semibold text-sm text-white">Supabase / PostgreSQL Quick Setup</h3>
-              </div>
-              <a
-                href="https://supabase.com/dashboard"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
-              >
-                Open Supabase Dashboard <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-
-            <div className="p-3 rounded bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
-              <span className="text-xs text-slate-300 font-medium">
-                SQL Schema: Creates <code className="font-mono text-sky-400">public.printflow_store</code> table
-              </span>
               <Button
                 type="button"
                 variant={copiedSql ? 'primary' : 'outline'}
@@ -549,81 +500,77 @@ export const CloudDatabaseSettingsView: React.FC = () => {
                 onClick={handleCopySql}
                 leftIcon={copiedSql ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               >
-                {copiedSql ? 'Copied to Clipboard!' : 'Copy SQL Script'}
+                {copiedSql ? 'SQL Copied!' : 'Copy SQL Script'}
               </Button>
             </div>
+
+            <form onSubmit={handleSaveSupabase} className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Supabase Project URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://your-project.supabase.co"
+                    value={sbConfig.supabaseUrl}
+                    onChange={(e) => setSbConfig({ ...sbConfig, supabaseUrl: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Supabase Anon Public API Key
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="eyJhbGciOi..."
+                    value={sbConfig.supabaseAnonKey}
+                    onChange={(e) => setSbConfig({ ...sbConfig, supabaseAnonKey: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sbConfig.enabled}
+                    onChange={(e) => setSbConfig({ ...sbConfig, enabled: e.target.checked })}
+                    className="rounded border-slate-700 bg-slate-950 text-sky-600 focus:ring-0 w-3.5 h-3.5"
+                  />
+                  <span>Enable External Supabase Mirror</span>
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    isLoading={isTestingSb}
+                    onClick={handleTestSupabase}
+                    leftIcon={<Zap className="w-3.5 h-3.5" />}
+                  >
+                    Test Supabase
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    isLoading={isSavingSb}
+                    leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                  >
+                    Save Credentials
+                  </Button>
+                </div>
+              </div>
+            </form>
           </div>
-
-          {/* Supabase Form */}
-          <form onSubmit={handleSaveSupabase} className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Key className="w-4 h-4 text-sky-400" />
-                <h3 className="font-semibold text-sm text-white">Supabase Credentials</h3>
-              </div>
-              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <span>Enable Supabase Sync:</span>
-                <input
-                  type="checkbox"
-                  checked={sbConfig.enabled}
-                  onChange={(e) => setSbConfig({ ...sbConfig, enabled: e.target.checked })}
-                  className="rounded border-slate-700 bg-slate-950 text-sky-600 focus:ring-0 w-4 h-4"
-                />
-              </label>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Project URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://your-project.supabase.co"
-                  value={sbConfig.supabaseUrl}
-                  onChange={(e) => setSbConfig({ ...sbConfig, supabaseUrl: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Anon Public Key
-                </label>
-                <input
-                  type="password"
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  value={sbConfig.supabaseAnonKey}
-                  onChange={(e) => setSbConfig({ ...sbConfig, supabaseAnonKey: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                isLoading={isTestingSb}
-                onClick={handleTestSupabase}
-                leftIcon={<Zap className="w-3.5 h-3.5" />}
-              >
-                Test Connection
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                isLoading={isSavingSb}
-                leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
-              >
-                Save Supabase Credentials
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

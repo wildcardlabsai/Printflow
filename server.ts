@@ -11,6 +11,7 @@ import webhooksRouter from './server/routes/webhooks';
 import printersRouter from './server/routes/printers';
 import printerAgentRouter from './server/routes/printerAgent';
 import printFilesRouter from './server/routes/printFiles';
+import databaseRouter from './server/routes/database';
 import { serverStore } from './server/storage';
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Server-side API routes
+app.use('/api/database', databaseRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/mappings', mappingsRouter);
 app.use('/api/shipping', shippingRouter);

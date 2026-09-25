@@ -5,6 +5,7 @@ import { NavSection } from './Sidebar';
 import { useDatabase } from '../../context/DatabaseContext';
 import { cloudDb } from '../../lib/cloudDb';
 import { firebaseDb } from '../../lib/firebaseDb';
+import { liveSync, LiveSyncState } from '../../lib/liveSync';
 
 interface HeaderProps {
   currentSection: NavSection;
@@ -38,29 +39,16 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { filaments, productionJobs, settings, orders } = useDatabase();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [isCloudConnected, setIsCloudConnected] = useState(() => {
-    const isFb = firebaseDb.isConfigured() && firebaseDb.getConfig().enabled;
-    const isSb = cloudDb.isConfigured() && cloudDb.getConfig().enabled;
-    return isFb || isSb;
-  });
+  const [liveState, setLiveState] = useState<LiveSyncState>(() => liveSync.getState());
 
   useEffect(() => {
-    const handleSbStatus = (e: any) => {
-      if (e.detail) {
-        setIsCloudConnected(e.detail.status === 'connected' || e.detail.status === 'syncing');
-      }
-    };
-    const handleFbStatus = (e: any) => {
-      if (e.detail) {
-        setIsCloudConnected(e.detail.status === 'connected' || e.detail.status === 'syncing');
-      }
+    const handleLiveStatus = (e: any) => {
+      if (e.detail) setLiveState(e.detail);
     };
 
-    window.addEventListener('printflow_cloud_sync_status', handleSbStatus);
-    window.addEventListener('pokecraft_firebase_sync_status', handleFbStatus);
+    window.addEventListener('pokecraft_live_sync_status', handleLiveStatus);
     return () => {
-      window.removeEventListener('printflow_cloud_sync_status', handleSbStatus);
-      window.removeEventListener('pokecraft_firebase_sync_status', handleFbStatus);
+      window.removeEventListener('pokecraft_live_sync_status', handleLiveStatus);
     };
   }, []);
 
@@ -103,14 +91,35 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={() => onNavigate('settings')}
           className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
-            isCloudConnected
+            liveState.status === 'connected'
               ? 'bg-emerald-950/40 border-emerald-800/80 text-emerald-400 hover:bg-emerald-950/60'
+              : liveState.status === 'syncing'
+              ? 'bg-sky-950/40 border-sky-800/80 text-sky-400 animate-pulse'
               : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200'
           }`}
-          title={isCloudConnected ? 'Multi-Device Cloud Sync Active' : 'Click to configure Cloud Database in Settings'}
+          title={
+            liveState.status === 'connected'
+              ? `Live Multi-Device Sync Active (${liveState.connectedDevices} device${liveState.connectedDevices > 1 ? 's' : ''} connected)`
+              : 'Connecting to Cloud Sync...'
+          }
         >
-          <Cloud className={`w-3.5 h-3.5 ${isCloudConnected ? 'text-emerald-400' : 'text-slate-400'}`} />
-          <span>{isCloudConnected ? 'Cloud Synced' : 'Local Storage'}</span>
+          <span
+            className={`w-2 h-2 rounded-full ${
+              liveState.status === 'connected'
+                ? 'bg-emerald-400 animate-pulse'
+                : liveState.status === 'syncing'
+                ? 'bg-sky-400'
+                : 'bg-amber-400'
+            }`}
+          />
+          <Cloud className="w-3.5 h-3.5" />
+          <span>
+            {liveState.status === 'connected'
+              ? 'Live Cloud Synced'
+              : liveState.status === 'syncing'
+              ? 'Syncing...'
+              : 'Local (Reconnecting)'}
+          </span>
         </button>
 
         {/* Notifications Popover Trigger */}
