@@ -1,0 +1,6 @@
+{
+  "name": "PrintFlow",
+  "description": "Production-ready 3D printing order and production management system for multi-channel sales, job tracking, filament inventory, and cost calculations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
