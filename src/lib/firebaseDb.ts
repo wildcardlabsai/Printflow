@@ -85,13 +85,13 @@ export class FirebaseDbService {
     }
 
     return {
-      enabled: Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID),
-      apiKey: (import.meta.env.VITE_FIREBASE_API_KEY as string) || '',
-      authDomain: (import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string) || '',
-      projectId: (import.meta.env.VITE_FIREBASE_PROJECT_ID as string) || '',
-      storageBucket: (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string) || '',
-      messagingSenderId: (import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string) || '',
-      appId: (import.meta.env.VITE_FIREBASE_APP_ID as string) || '',
+      enabled: true,
+      apiKey: (import.meta.env.VITE_FIREBASE_API_KEY as string) || 'AIzaSyBTkaqVu6tSQvD-Fe75BYOO0VVc2V6sbr8',
+      authDomain: (import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string) || 'printflow-31429.firebaseapp.com',
+      projectId: (import.meta.env.VITE_FIREBASE_PROJECT_ID as string) || 'printflow-31429',
+      storageBucket: (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET as string) || 'printflow-31429.firebasestorage.app',
+      messagingSenderId: (import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID as string) || '872211637639',
+      appId: (import.meta.env.VITE_FIREBASE_APP_ID as string) || '1:872211637639:web:c07908705b4543643c1f22',
     };
   }
 
