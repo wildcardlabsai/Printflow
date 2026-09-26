@@ -49,6 +49,12 @@ export class FirebaseDbService {
   private firestore: Firestore | null = null;
   private unsubscribers: Unsubscribe[] = [];
   private isPushing = false;
+  private currentState: FirebaseSyncState = {
+    status: 'disconnected',
+    lastSyncedAt: null,
+    isConfigured: false,
+    activeCollectionCount: 0,
+  };
 
   private constructor() {
     this.config = this.loadConfig();
@@ -354,7 +360,12 @@ export class FirebaseDbService {
     }
   }
 
+  public getState(): FirebaseSyncState {
+    return { ...this.currentState };
+  }
+
   private broadcastStatus(state: FirebaseSyncState): void {
+    this.currentState = state;
     window.dispatchEvent(new CustomEvent('pokecraft_firebase_sync_status', { detail: state }));
   }
 }

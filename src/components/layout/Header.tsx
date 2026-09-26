@@ -3,9 +3,7 @@ import { Menu, Plus, Bell, AlertTriangle, Layers, ShoppingBag, Cloud } from 'luc
 import { Button } from '../ui/Button';
 import { NavSection } from './Sidebar';
 import { useDatabase } from '../../context/DatabaseContext';
-import { cloudDb } from '../../lib/cloudDb';
-import { firebaseDb } from '../../lib/firebaseDb';
-import { liveSync, LiveSyncState } from '../../lib/liveSync';
+import { firebaseDb, FirebaseSyncState } from '../../lib/firebaseDb';
 
 interface HeaderProps {
   currentSection: NavSection;
@@ -39,16 +37,15 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { filaments, productionJobs, settings, orders } = useDatabase();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [liveState, setLiveState] = useState<LiveSyncState>(() => liveSync.getState());
+  const [fbState, setFbState] = useState<FirebaseSyncState>(() => firebaseDb.getState());
 
   useEffect(() => {
-    const handleLiveStatus = (e: any) => {
-      if (e.detail) setLiveState(e.detail);
+    const handleFbStatus = (e: any) => {
+      if (e.detail) setFbState(e.detail);
     };
-
-    window.addEventListener('pokecraft_live_sync_status', handleLiveStatus);
+    window.addEventListener('pokecraft_firebase_sync_status', handleFbStatus);
     return () => {
-      window.removeEventListener('pokecraft_live_sync_status', handleLiveStatus);
+      window.removeEventListener('pokecraft_firebase_sync_status', handleFbStatus);
     };
   }, []);
 
@@ -87,38 +84,46 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right: Actions & notifications */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Multi-Device Cloud Sync Status */}
+        {/* Firebase Cloud Sync Status */}
         <button
           onClick={() => onNavigate('settings')}
           className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
-            liveState.status === 'connected'
+            fbState.status === 'connected'
               ? 'bg-emerald-950/40 border-emerald-800/80 text-emerald-400 hover:bg-emerald-950/60'
-              : liveState.status === 'syncing'
+              : fbState.status === 'syncing'
               ? 'bg-sky-950/40 border-sky-800/80 text-sky-400 animate-pulse'
+              : fbState.status === 'error'
+              ? 'bg-rose-950/40 border-rose-800/80 text-rose-400'
               : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200'
           }`}
           title={
-            liveState.status === 'connected'
-              ? `Live Multi-Device Sync Active (${liveState.connectedDevices} device${liveState.connectedDevices > 1 ? 's' : ''} connected)`
-              : 'Connecting to Cloud Sync...'
+            fbState.status === 'connected'
+              ? 'Firebase Cloud Sync Active'
+              : fbState.status === 'error'
+              ? `Sync Error: ${fbState.error || 'Unknown'}`
+              : 'Connecting to Firebase...'
           }
         >
           <span
             className={`w-2 h-2 rounded-full ${
-              liveState.status === 'connected'
+              fbState.status === 'connected'
                 ? 'bg-emerald-400 animate-pulse'
-                : liveState.status === 'syncing'
+                : fbState.status === 'syncing'
                 ? 'bg-sky-400'
+                : fbState.status === 'error'
+                ? 'bg-rose-400'
                 : 'bg-amber-400'
             }`}
           />
           <Cloud className="w-3.5 h-3.5" />
           <span>
-            {liveState.status === 'connected'
-              ? 'Live Cloud Synced'
-              : liveState.status === 'syncing'
+            {fbState.status === 'connected'
+              ? 'Cloud Synced'
+              : fbState.status === 'syncing'
               ? 'Syncing...'
-              : 'Local (Reconnecting)'}
+              : fbState.status === 'error'
+              ? 'Sync Error'
+              : 'Connecting...'}
           </span>
         </button>
 
