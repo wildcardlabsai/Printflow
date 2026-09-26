@@ -166,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Layers3 className="w-4 h-4 text-white" />
           </div>
           <div>
-            <span className="font-semibold tracking-tight text-white text-base">PrintFlow</span>
+            <span className="font-semibold tracking-tight text-white text-base">PokeCraft HQ</span>
             <span className="text-[10px] text-sky-400 font-medium tracking-widest block uppercase">
               Operations OS
             </span>
