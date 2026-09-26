@@ -30,7 +30,21 @@ export const PackingSlipModal: React.FC<PackingSlipModalProps> = ({ order, isOpe
   if (!isOpen || !order) return null;
 
   const handlePrint = () => {
-    window.print();
+    const printContent = document.getElementById('packing-slip-printable');
+    if (!printContent) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Packing Slip - ${order.internalOrderId}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #000; background: white; }
+  @page { margin: 15mm 18mm; size: A4; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style></head><body>${printContent.innerHTML}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
   };
 
   const formattedDate = new Date(order.orderDate).toLocaleDateString('en-GB', {
@@ -363,35 +377,6 @@ export const PackingSlipModal: React.FC<PackingSlipModalProps> = ({ order, isOpe
         </div>
       </Modal>
 
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          #packing-slip-printable, #packing-slip-printable * {
-            visibility: visible !important;
-          }
-          #packing-slip-printable {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100% !important;
-            min-height: auto !important;
-            margin: 0 !important;
-            padding: 20mm !important;
-            box-shadow: none !important;
-            border: none !important;
-            background: white !important;
-            color: black !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          @page {
-            margin: 0;
-            size: A4;
-          }
-        }
-      `}</style>
     </>
   );
 };
