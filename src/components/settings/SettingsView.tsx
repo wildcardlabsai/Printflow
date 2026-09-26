@@ -8,6 +8,7 @@ import { IntegrationsView } from '../integrations/IntegrationsView';
 import { PrinterFormModal } from '../printers/PrinterFormModal';
 import { EmailSettingsView } from './EmailSettingsView';
 import { CloudDatabaseSettingsView } from './CloudDatabaseSettingsView';
+import { CsvImportModal } from './CsvImportModal';
 import { Printer, PrinterStatus } from '../../types';
 import { PrinterStatusBadge, PrinterConnectionBadge } from '../ui/Badge';
 import {
@@ -33,6 +34,7 @@ import {
   Wifi,
   Mail,
   Cloud,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
@@ -74,6 +76,7 @@ export const SettingsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'general' | 'clouddb' | 'printers' | 'emails' | 'integrations' | 'database'>('general');
   const [editingPrinter, setEditingPrinter] = useState<Printer | null>(null);
   const [showPrinterModal, setShowPrinterModal] = useState(false);
+  const [csvImportType, setCsvImportType] = useState<'products' | 'orders' | null>(null);
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
@@ -624,6 +627,31 @@ export const SettingsView: React.FC = () => {
               Reset to Seed Data
             </Button>
           </div>
+
+          <div className="border-t border-slate-800 pt-4 mt-4">
+            <h4 className="font-semibold text-sm text-white mb-1">CSV Import</h4>
+            <p className="text-xs text-slate-400 mb-3">
+              Bulk import products or orders from a CSV file or pasted spreadsheet data.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCsvImportType('products')}
+                leftIcon={<FileSpreadsheet className="w-3.5 h-3.5" />}
+              >
+                Import Products CSV
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCsvImportType('orders')}
+                leftIcon={<FileSpreadsheet className="w-3.5 h-3.5" />}
+              >
+                Import Orders CSV
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -660,6 +688,14 @@ export const SettingsView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {csvImportType && (
+        <CsvImportModal
+          isOpen={true}
+          importType={csvImportType}
+          onClose={() => setCsvImportType(null)}
+        />
       )}
     </div>
   );
