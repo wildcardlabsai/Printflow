@@ -145,6 +145,7 @@ export const FilamentFormModal: React.FC<FilamentFormModalProps> = ({
             <div className="relative">
               <input
                 type="number"
+                onFocus={(e) => e.target.select()}
                 min="100"
                 step="50"
                 value={weightPurchasedG}
@@ -160,6 +161,7 @@ export const FilamentFormModal: React.FC<FilamentFormModalProps> = ({
             <div className="relative">
               <input
                 type="number"
+                onFocus={(e) => e.target.select()}
                 min="0"
                 step="10"
                 value={remainingWeightG}
@@ -178,6 +180,7 @@ export const FilamentFormModal: React.FC<FilamentFormModalProps> = ({
               </span>
               <input
                 type="number"
+                onFocus={(e) => e.target.select()}
                 step="0.5"
                 min="0"
                 value={cost}

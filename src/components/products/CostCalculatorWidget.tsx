@@ -60,6 +60,7 @@ export const CostCalculatorWidget: React.FC<CostCalculatorWidgetProps> = ({
               <div className="relative">
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   min="0"
                   step="1"
                   value={filamentGrams}
@@ -77,6 +78,7 @@ export const CostCalculatorWidget: React.FC<CostCalculatorWidgetProps> = ({
               <div className="relative">
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   min="0"
                   step="0.25"
                   value={printHours}
@@ -97,6 +99,7 @@ export const CostCalculatorWidget: React.FC<CostCalculatorWidgetProps> = ({
                 </span>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   step="0.5"
                   value={filamentCostPerKg}
                   onChange={(e) => setFilamentCostPerKg(Number(e.target.value))}
@@ -113,6 +116,7 @@ export const CostCalculatorWidget: React.FC<CostCalculatorWidgetProps> = ({
                 </span>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   step="0.01"
                   value={electricityCostPerHour}
                   onChange={(e) => setElectricityCostPerHour(Number(e.target.value))}
@@ -129,6 +133,7 @@ export const CostCalculatorWidget: React.FC<CostCalculatorWidgetProps> = ({
                 </span>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   step="0.05"
                   value={packagingCost}
                   onChange={(e) => setPackagingCost(Number(e.target.value))}
@@ -148,6 +153,7 @@ export const CostCalculatorWidget: React.FC<CostCalculatorWidgetProps> = ({
               </span>
               <input
                 type="number"
+                onFocus={(e) => e.target.select()}
                 step="0.50"
                 min="0"
                 value={sellingPrice}

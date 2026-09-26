@@ -113,6 +113,7 @@ export const LogUsageModal: React.FC<LogUsageModalProps> = ({
               <div className="relative">
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   min="1"
                   max={spool.remainingWeightG}
                   value={gramsToDeduct}
@@ -149,6 +150,7 @@ export const LogUsageModal: React.FC<LogUsageModalProps> = ({
                 <div className="relative">
                   <input
                     type="number"
+                onFocus={(e) => e.target.select()}
                     min="50"
                     value={measuredGrossWeight}
                     onChange={(e) => setMeasuredGrossWeight(parseInt(e.target.value) || 0)}
@@ -166,6 +168,7 @@ export const LogUsageModal: React.FC<LogUsageModalProps> = ({
                 <div className="relative">
                   <input
                     type="number"
+                onFocus={(e) => e.target.select()}
                     min="0"
                     value={tareWeight}
                     onChange={(e) => setTareWeight(parseInt(e.target.value) || 0)}

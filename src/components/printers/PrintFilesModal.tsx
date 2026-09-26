@@ -271,6 +271,7 @@ export const PrintFilesModal: React.FC<PrintFilesModalProps> = ({
                 <label className="block text-slate-300 mb-1">Print Duration (Minutes)</label>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   value={printMinutes}
                   onChange={(e) => setPrintMinutes(Number(e.target.value))}
                   className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-white"
@@ -281,6 +282,7 @@ export const PrintFilesModal: React.FC<PrintFilesModalProps> = ({
                 <label className="block text-slate-300 mb-1">Filament Usage (Grams)</label>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   value={filamentGrams}
                   onChange={(e) => setFilamentGrams(Number(e.target.value))}
                   className="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-white"

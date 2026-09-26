@@ -411,6 +411,7 @@ export const SettingsView: React.FC = () => {
                 </span>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   step="0.5"
                   min="5"
                   value={defaultFilamentCostPerKg}
@@ -433,6 +434,7 @@ export const SettingsView: React.FC = () => {
                 </span>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   step="0.01"
                   min="0"
                   value={electricityCostPerHour}
@@ -455,6 +457,7 @@ export const SettingsView: React.FC = () => {
                 </span>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   step="0.05"
                   min="0"
                   value={defaultPackagingCost}
@@ -531,6 +534,7 @@ export const SettingsView: React.FC = () => {
             </label>
             <input
               type="number"
+                onFocus={(e) => e.target.select()}
               min="50"
               step="10"
               value={lowFilamentThresholdG}

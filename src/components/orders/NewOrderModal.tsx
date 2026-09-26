@@ -386,6 +386,7 @@ export const NewOrderModal: React.FC<NewOrderModalProps> = ({
                   <div className="w-20">
                     <input
                       type="number"
+                onFocus={(e) => e.target.select()}
                       min="1"
                       value={row.quantity}
                       onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 1)}
@@ -401,6 +402,7 @@ export const NewOrderModal: React.FC<NewOrderModalProps> = ({
                     </span>
                     <input
                       type="number"
+                onFocus={(e) => e.target.select()}
                       step="0.01"
                       min="0"
                       value={row.unitPrice}
@@ -472,6 +474,7 @@ export const NewOrderModal: React.FC<NewOrderModalProps> = ({
                   </span>
                   <input
                     type="number"
+                onFocus={(e) => e.target.select()}
                     step="0.01"
                     min="0"
                     value={shippingCost}
@@ -489,6 +492,7 @@ export const NewOrderModal: React.FC<NewOrderModalProps> = ({
                   </span>
                   <input
                     type="number"
+                onFocus={(e) => e.target.select()}
                     step="0.01"
                     min="0"
                     value={discount}

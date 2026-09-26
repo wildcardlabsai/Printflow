@@ -175,6 +175,7 @@ export const AutoPrintSettingsModal: React.FC<AutoPrintSettingsModalProps> = ({
             <label className="block text-slate-300 mb-1">Max Queued Jobs Per Printer</label>
             <input
               type="number"
+                onFocus={(e) => e.target.select()}
               min={1}
               max={10}
               value={settings.maxQueuedJobsPerPrinter}

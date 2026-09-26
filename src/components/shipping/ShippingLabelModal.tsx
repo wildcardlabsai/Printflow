@@ -271,6 +271,7 @@ export const ShippingLabelModal: React.FC<ShippingLabelModalProps> = ({
             </label>
             <input
               type="number"
+                onFocus={(e) => e.target.select()}
               step="0.01"
               value={shippingCost}
               onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}

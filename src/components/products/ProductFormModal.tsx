@@ -253,6 +253,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               </span>
               <input
                 type="number"
+                onFocus={(e) => e.target.select()}
                 step="0.01"
                 min="0"
                 value={sellingPrice}
@@ -270,6 +271,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               </span>
               <input
                 type="number"
+                onFocus={(e) => e.target.select()}
                 step="0.01"
                 min="0"
                 value={costPrice}
@@ -284,6 +286,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             <div className="relative">
               <input
                 type="number"
+                onFocus={(e) => e.target.select()}
                 min="0"
                 value={estimatedFilamentGrams}
                 onChange={(e) => setEstimatedFilamentGrams(parseInt(e.target.value) || 0)}
@@ -298,6 +301,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             <div className="relative">
               <input
                 type="number"
+                onFocus={(e) => e.target.select()}
                 min="0"
                 step="5"
                 value={estimatedPrintTimeMinutes}
@@ -384,6 +388,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     <span className="absolute left-2 top-1 text-[11px] text-slate-400">+£</span>
                     <input
                       type="number"
+                onFocus={(e) => e.target.select()}
                       step="0.5"
                       value={v.priceModifier}
                       onChange={(e) =>

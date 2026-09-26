@@ -163,6 +163,7 @@ export const JobActionModal: React.FC<JobActionModalProps> = ({
                 </label>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   min="1"
                   step="1"
                   value={actualFilamentGrams}
@@ -181,6 +182,7 @@ export const JobActionModal: React.FC<JobActionModalProps> = ({
                 </label>
                 <input
                   type="number"
+                onFocus={(e) => e.target.select()}
                   min="1"
                   step="5"
                   value={actualPrintTimeMinutes}
