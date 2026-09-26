@@ -245,6 +245,27 @@ export const FilamentView: React.FC<FilamentViewProps> = ({
           );
         })}
       </div>
+
+      {filteredFilaments.length === 0 && (
+        <div className="py-16 flex flex-col items-center text-center bg-slate-900 border border-slate-800 rounded-lg">
+          <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+            <Scroll className="w-6 h-6 text-slate-500" />
+          </div>
+          <p className="text-sm text-slate-300 font-medium mb-1">
+            {filaments.length === 0 ? 'No filament spools tracked' : 'No spools match your filters'}
+          </p>
+          <p className="text-xs text-slate-500 mb-4 max-w-[280px]">
+            {filaments.length === 0
+              ? 'Add your filament spools to track usage, remaining weight, and get low-stock alerts.'
+              : 'Try adjusting your search or material filter.'}
+          </p>
+          {filaments.length === 0 && (
+            <Button variant="primary" size="sm" onClick={() => onOpenFilamentModal()} leftIcon={<Plus className="w-3.5 h-3.5" />}>
+              Add First Spool
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

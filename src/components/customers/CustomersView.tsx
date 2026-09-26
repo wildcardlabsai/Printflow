@@ -79,8 +79,25 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
             <tbody className="divide-y divide-slate-800/80 bg-slate-900/50">
               {filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
-                    No customers found matching your search.
+                  <td colSpan={7} className="py-16 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                        <Users className="w-6 h-6 text-slate-500" />
+                      </div>
+                      <p className="text-sm text-slate-300 font-medium mb-1">
+                        {customers.length === 0 ? 'No customers yet' : 'No customers match your search'}
+                      </p>
+                      <p className="text-xs text-slate-500 mb-4 max-w-[260px]">
+                        {customers.length === 0
+                          ? 'Customers are added automatically when you create orders, or you can add them manually.'
+                          : 'Try adjusting your search criteria.'}
+                      </p>
+                      {customers.length === 0 && (
+                        <Button variant="primary" size="sm" onClick={() => onOpenCustomerModal()} leftIcon={<Plus className="w-3.5 h-3.5" />}>
+                          Add First Customer
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (

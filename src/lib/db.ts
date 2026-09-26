@@ -94,18 +94,6 @@ export class DatabaseService {
   public ensureInitialized(): void {
     if (!localStorage.getItem(DB_PREFIX + 'initialized')) {
       this.resetToSeedData();
-    } else {
-      // Ensure company name is updated to PokeCraft 3D Prints
-      try {
-        const currentSettings = this.getSettings();
-        if (currentSettings.businessName !== 'PokeCraft 3D Prints') {
-          currentSettings.businessName = 'PokeCraft 3D Prints';
-          currentSettings.orderPrefix = 'PC-';
-          saveToStorage('settings', currentSettings);
-        }
-      } catch (e) {
-        // ignore
-      }
     }
   }
 

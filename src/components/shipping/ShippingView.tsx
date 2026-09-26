@@ -143,8 +143,20 @@ export const ShippingView: React.FC<ShippingViewProps> = ({
             <tbody className="divide-y divide-slate-800/80 bg-slate-900/50">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
-                    No orders currently in this shipping queue.
+                  <td colSpan={7} className="py-16 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                        <Truck className="w-6 h-6 text-slate-500" />
+                      </div>
+                      <p className="text-sm text-slate-300 font-medium mb-1">
+                        {orders.length === 0 ? 'No orders to ship' : 'No orders in this queue'}
+                      </p>
+                      <p className="text-xs text-slate-500 max-w-[260px]">
+                        {orders.length === 0
+                          ? 'Orders ready for dispatch will appear here once they finish printing.'
+                          : 'Orders move here after printing is complete. Check the other tabs or adjust your search.'}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
